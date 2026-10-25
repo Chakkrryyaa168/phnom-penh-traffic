@@ -1,0 +1,145 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Phnom Penh Traffic Insights{% endblock %}</title>
+
+  <!-- Google Fonts: Ubuntu -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap" rel="stylesheet">
+
+  <!-- Bootstrap 5.3.3 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+
+  <!-- Early Theme script to avoid flash of light theme -->
+  <script src="{% static 'js/theme.js' %}"></script>
+  
+  <!-- Chart.js 4.4.2 CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  <script>
+    if (window.Chart) {
+      Chart.defaults.font.family = "'Ubuntu', system-ui, -apple-system, sans-serif";
+    }
+  </script>
+
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+  <!-- Navigation Header -->
+  <header>
+    <nav class="navbar navbar-expand-lg border-bottom shadow-sm py-2">
+      <div class="container-fluid px-3 px-lg-4">
+        <a class="navbar-brand text-decoration-none" href="{% url 'traffic:dashboard' %}">
+          <span class="d-flex flex-column lh-1">
+            <span class="fw-bold" style="color: var(--pp-teal);">Phnom Penh</span>
+            <span class="small text-secondary fw-semibold" style="font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase;">Traffic Insights</span>
+          </span>
+        </a>
+
+        <!-- Mobile Toggler -->
+        <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain" aria-controls="navbarMain" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarMain">
+          <!-- Main Nav Links -->
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-3 gap-1">
+            <li class="nav-item">
+              <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'traffic:dashboard' %}">
+                <i class="bi bi-grid-1x2-fill me-1"></i>Dashboard
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link {% if request.resolver_match.url_name == 'compare' %}active{% endif %}" href="{% url 'traffic:compare' %}">
+                <i class="bi bi-shuffle me-1"></i>Compare
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link {% if request.resolver_match.url_name == 'upload' %}active{% endif %}" href="{% url 'traffic:upload' %}">
+                <i class="bi bi-cloud-arrow-up-fill me-1"></i>Upload Data
+              </a>
+            </li>
+          </ul>
+
+          <!-- Right Nav Controls -->
+          <div class="d-flex align-items-center gap-2 mt-2 mt-lg-0">
+            <!-- Simulated Data Badge (visible when demo dataset is loaded) -->
+            {% if is_simulated_dataset %}
+            <span class="badge badge-simulated" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Simulated hourly traffic dataset loaded for Phnom Penh intersections">
+              <i class="bi bi-cpu-fill me-1"></i>Simulated Data
+            </span>
+            {% endif %}
+
+            <!-- Admin Link -->
+            <a href="/admin/" target="_blank" class="btn btn-sm btn-outline-secondary d-none d-md-inline-flex align-items-center" title="Open Django Admin">
+              <i class="bi bi-shield-lock me-1"></i>Admin
+            </a>
+
+            <!-- Theme Switcher -->
+            <button id="theme-toggle-btn" class="btn btn-sm btn-outline-secondary rounded-circle d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;" type="button" aria-label="Toggle theme">
+              <i id="theme-icon" class="bi bi-sun-fill"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Flash Messages Container -->
+  <div class="container-fluid px-3 px-lg-4 mt-3">
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show shadow-sm" role="alert">
+          <div class="d-flex align-items-center">
+            <i class="bi {% if message.tags == 'success' %}bi-check-circle-fill text-success{% elif message.tags == 'error' %}bi-exclamation-triangle-fill text-danger{% else %}bi-info-circle-fill text-info{% endif %} fs-5 me-2"></i>
+            <div>{{ message }}</div>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+    {% endif %}
+  </div>
+
+  <!-- Main View Content -->
+  <main class="py-3 py-lg-4">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-top py-3 mt-auto bg-body-tertiary">
+    <div class="container-fluid px-3 px-lg-4 d-flex flex-column flex-md-row justify-content-between align-items-center gap-2 small text-secondary">
+      <div>
+        <strong class="text-body">Phnom Penh Traffic Insights</strong> &copy; 2026 &bull; Urban Mobility Analytics
+      </div>
+      <div class="d-flex gap-3 align-items-center">
+        <span>Django 5 &bull; SQLite &bull; pandas &bull; Bootstrap 5 &bull; Chart.js</span>
+        <a href="{% url 'traffic:api_peaks' %}" target="_blank" class="text-decoration-none text-secondary hover-teal">API</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Bootstrap 5 Bundle with Popper -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Tooltips Initialization -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+      tooltipTriggerList.map(function(el) {
+        return new bootstrap.Tooltip(el);
+      });
+    });
+  </script>
+
+  {% block extra_js %}{% endblock %}
+</body>
+</html>
+

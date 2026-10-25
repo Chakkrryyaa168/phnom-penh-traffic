@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}Methodology | Phnom Penh Traffic Insights{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-3 px-lg-4" style="max-width: 1040px;">
+  <!-- Header -->
+  <div class="mb-4">
+    <h1 class="h3 fw-bold mb-1">Analytical Methodology &amp; Mathematical Formulation</h1>
+    <p class="text-secondary small mb-0">How hourly traffic volumes, peak hours, rush periods, and surge ratios are calculated</p>
+  </div>
+
+  <!-- Core Method Card: Peak Hour Calculation -->
+  <div class="card mb-4 shadow-sm">
+    <div class="card-header bg-transparent py-3 border-bottom d-flex align-items-center">
+      <i class="bi bi-clock-history fs-5 text-teal me-2" style="color: var(--pp-teal);"></i>
+      <h2 class="h5 fw-bold mb-0">1. How Peak Hour is Calculated</h2>
+    </div>
+    <div class="card-body p-4">
+      <p>
+        In <strong>Phnom Penh Traffic Insights</strong>, an intersection's <strong>Peak Hour</strong> is defined as:
+      </p>
+      <div class="p-3 border-start border-4 rounded bg-body-tertiary mb-3" style="border-left-color: var(--pp-teal) !important;">
+        <span class="fs-6 fw-bold">"The hour of the day (0 to 23) with the highest average traffic volume across all observed days."</span>
+      </div>
+
+      <h3 class="h6 fw-bold mt-4 mb-2">Why Average Volume Instead of a Single Maximum Snapshot?</h3>
+      <p class="text-secondary">
+        A single instantaneous maximum volume reading can be heavily skewed by one-off transient anomalies (e.g. an isolated accident, VIP convoy escort, or sensor glitch). By computing the <strong>expected average volume for each hour slot $h \in [0, 23]$</strong> across all recorded calendar dates, the resulting 24-hour profile represents the consistent, structural daily traffic rhythm of each intersection.
+      </p>
+
+      <h3 class="h6 fw-bold mt-4 mb-2">Step-by-Step Algorithm (Executed via pandas)</h3>
+      <ol class="text-secondary small mb-0">
+        <li class="mb-2">
+          <strong>Hourly Grouping:</strong> All timestamp records for an intersection are decomposed by hour of day ($h = \text{timestamp.hour} \in \{0, 1, \dots, 23\}$).
+        </li>
+        <li class="mb-2">
+          <strong>Mean Volume Computation:</strong> The arithmetic mean volume $\bar{V}_h$ is calculated for each hour $h$:
+          <div class="my-2 p-2 bg-body font-monospace rounded border text-body" style="font-size: 0.85rem;">
+            V̄_h = (1 / N_h) * Σ volume(h, d)
+          </div>
+        </li>
+        <li class="mb-2">
+          <strong>Peak Hour Identification:</strong> The peak hour $h^*$ is identified as the hour index maximizing average volume:
+          <div class="my-2 p-2 bg-body font-monospace rounded border text-body" style="font-size: 0.85rem;">
+            h* = argmax_{h ∈ [0, 23]} ( V̄_h )
+          </div>
+        </li>
+        <li>
+          <strong>Peak Range Formatting:</strong> Displayed as the 60-minute window, e.g. hour <code>7</code> becomes <code>07:00 - 08:00</code>.
+        </li>
+      </ol>
+    </div>
+  </div>
+
+  <!-- Rush Hour Classification & Surge Ratio -->
+  <div class="row g-4 mb-4">
+    <!-- Rush Periods -->
+    <div class="col-12 col-md-6">
+      <div class="card h-100 shadow-sm">
+        <div class="card-header bg-transparent py-3 border-bottom d-flex align-items-center">
+          <i class="bi bi-tag-fill me-2" style="color: var(--pp-coral);"></i>
+          <h2 class="h5 fw-bold mb-0">2. Rush Period Classification</h2>
+        </div>
+        <div class="card-body">
+          <p class="small text-secondary mb-3">
+            Intersections are systematically classified into three operational periods based on their peak hour:
+          </p>
+          <ul class="list-group list-group-flush small">
+            <li class="list-group-item bg-transparent px-0 py-2 d-flex justify-content-between align-items-center">
+              <div>
+                <span class="badge badge-morning me-2">Morning rush 06-09</span>
+                <span class="text-secondary">Hours 06:00 to 09:59 (6 &le; h &le; 9)</span>
+              </div>
+              <span class="font-monospace text-teal fw-bold">#2a9d8f</span>
+            </li>
+            <li class="list-group-item bg-transparent px-0 py-2 d-flex justify-content-between align-items-center">
+              <div>
+                <span class="badge badge-evening me-2">Evening rush 16-19</span>
+                <span class="text-secondary">Hours 16:00 to 19:59 (16 &le; h &le; 19)</span>
+              </div>
+              <span class="font-monospace text-coral fw-bold" style="color: var(--pp-coral);">#e76f51</span>
+            </li>
+            <li class="list-group-item bg-transparent px-0 py-2 d-flex justify-content-between align-items-center">
+              <div>
+                <span class="badge badge-other me-2">Other</span>
+                <span class="text-secondary">Midday, late evening, or night hours</span>
+              </div>
+              <span class="font-monospace text-warning fw-bold">#e9c46a</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Surge Peak Ratio -->
+    <div class="col-12 col-md-6">
+      <div class="card h-100 shadow-sm">
+        <div class="card-header bg-transparent py-3 border-bottom d-flex align-items-center">
+          <i class="bi bi-speedometer2 me-2 text-primary"></i>
+          <h2 class="h5 fw-bold mb-0">3. Peak Ratio Metric</h2>
+        </div>
+        <div class="card-body">
+          <p class="small text-secondary mb-2">
+            The <strong>Peak Ratio</strong> measures the relative intensity of the traffic spike compared to standard diurnal baseline traffic:
+          </p>
+          <div class="p-2 bg-body-tertiary rounded border font-monospace text-center my-3" style="font-size: 0.95rem;">
+            Peak Ratio = Peak Volume / (24-Hour Average Hourly Volume)
+          </div>
+          <div class="small text-secondary">
+            <div class="mb-1"><span class="badge bg-danger-subtle text-danger border border-danger-subtle">&ge; 1.80x</span> <strong>High Surge:</strong> Severe commuter bottlenecks with extreme tidal traffic.</div>
+            <div class="mb-1"><span class="badge bg-warning-subtle text-warning border border-warning-subtle">1.40x - 1.79x</span> <strong>Moderate Surge:</strong> Typical urban commute corridor.</div>
+            <div><span class="badge bg-secondary-subtle text-secondary">&lt; 1.40x</span> <strong>Steady Flow:</strong> Continuous commercial or mixed activity without severe spikes.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Technical Stack & Architecture -->
+  <div class="card mb-4 shadow-sm">
+    <div class="card-header bg-transparent py-3 border-bottom d-flex align-items-center">
+      <i class="bi bi-cpu text-secondary me-2"></i>
+      <h2 class="h5 fw-bold mb-0">4. System Architecture &amp; Data Pipeline</h2>
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-3">
+          <div class="p-3 border rounded bg-body-tertiary h-100">
+            <div class="fw-bold text-teal mb-1" style="color: var(--pp-teal);">
+              <i class="bi bi-database me-1"></i>Database Layer
+            </div>
+            <div class="small text-secondary">
+              SQLite with composite index on <code>(intersection, timestamp)</code> ensuring sub-millisecond queries.
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="p-3 border rounded bg-body-tertiary h-100">
+            <div class="fw-bold text-coral mb-1" style="color: var(--pp-coral);">
+              <i class="bi bi-calculator me-1"></i>Analytics Engine
+            </div>
+            <div class="small text-secondary">
+              <code>traffic/services.py</code> encapsulates vectorized pandas aggregations completely isolated from web views.
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="p-3 border rounded bg-body-tertiary h-100">
+            <div class="fw-bold mb-1 text-primary">
+              <i class="bi bi-palette me-1"></i>Responsive UI
+            </div>
+            <div class="small text-secondary">
+              Bootstrap 5.3 with full Light/Dark mode switching and custom Phnom Penh Teal &amp; Coral palette.
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="p-3 border rounded bg-body-tertiary h-100">
+            <div class="fw-bold mb-1 text-warning">
+              <i class="bi bi-bar-chart-line me-1"></i>Data Visualization
+            </div>
+            <div class="small text-secondary">
+              Chart.js 4.4 interactive bar and line charts dynamically fed by internal JSON endpoints.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

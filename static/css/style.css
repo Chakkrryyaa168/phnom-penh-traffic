@@ -1,0 +1,315 @@
+/* Phnom Penh Traffic Insights - Custom Dashboard Styles */
+
+:root {
+  --pp-teal: #2a9d8f;
+  --pp-teal-rgb: 42, 157, 143;
+  --pp-teal-dark: #21867a;
+  --pp-coral: #e76f51;
+  --pp-coral-rgb: 231, 111, 81;
+  --pp-coral-dark: #cf583a;
+  --pp-navy: #264653;
+  --pp-gold: #e9c46a;
+  --pp-sky: #457b9d;
+
+  --card-bg-light: #ffffff;
+  --card-border-light: rgba(0, 0, 0, 0.08);
+  --kpi-bg-light: #f8fafc;
+}
+
+[data-bs-theme="dark"] {
+  --pp-teal: #38b2ac;
+  --pp-coral: #f07f65;
+  --card-bg-dark: #1e2430;
+  --card-border-dark: rgba(255, 255, 255, 0.08);
+  --kpi-bg-dark: #171c26;
+  background-color: #0f131a;
+  color: #e2e8f0;
+}
+
+/* Typography & Layout */
+body {
+  font-family: 'Ubuntu', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex: 1;
+}
+
+/* Navbar */
+.navbar-brand {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.brand-icon {
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, var(--pp-teal), var(--pp-coral));
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-weight: 900;
+  font-size: 1.1rem;
+}
+
+.nav-link {
+  font-weight: 500;
+  padding: 0.5rem 0.85rem !important;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.nav-link:hover {
+  background-color: rgba(var(--pp-teal-rgb), 0.12);
+  color: var(--pp-teal) !important;
+}
+
+.nav-link.active {
+  color: var(--pp-teal) !important;
+  font-weight: 600;
+}
+
+/* Simulated Badge */
+.badge-simulated {
+  background: rgba(233, 196, 106, 0.18);
+  color: #d4a317;
+  border: 1px solid rgba(233, 196, 106, 0.45);
+  font-weight: 600;
+  padding: 0.35rem 0.65rem;
+  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.75rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  animation: pulse-border 2.5s infinite;
+}
+
+[data-bs-theme="dark"] .badge-simulated {
+  background: rgba(233, 196, 106, 0.12);
+  color: #f1cf7a;
+  border-color: rgba(233, 196, 106, 0.3);
+}
+
+@keyframes pulse-border {
+  0% { box-shadow: 0 0 0 0 rgba(233, 196, 106, 0.3); }
+  70% { box-shadow: 0 0 0 6px rgba(233, 196, 106, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(233, 196, 106, 0); }
+}
+
+/* Cards & Surfaces */
+.card {
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+[data-bs-theme="dark"] .card {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  background-color: #1a202c;
+}
+
+/* KPI Cards */
+.kpi-card {
+  border-radius: 14px;
+  padding: 1.25rem 1.4rem;
+  position: relative;
+  overflow: hidden;
+  border-left: 4px solid var(--pp-teal);
+}
+
+.kpi-card.kpi-busiest {
+  border-left-color: var(--pp-coral);
+}
+
+.kpi-card.kpi-peak {
+  border-left-color: var(--pp-teal);
+}
+
+.kpi-card.kpi-diff {
+  border-left-color: var(--pp-sky);
+}
+
+.kpi-card.kpi-records {
+  border-left-color: var(--pp-gold);
+}
+
+.kpi-title {
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  margin-bottom: 0.4rem;
+}
+
+[data-bs-theme="dark"] .kpi-title {
+  color: #94a3b8;
+}
+
+.kpi-value {
+  font-size: 1.85rem;
+  font-weight: 800;
+  line-height: 1.2;
+  margin-bottom: 0.25rem;
+  letter-spacing: -0.02em;
+}
+
+.kpi-subtitle {
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+[data-bs-theme="dark"] .kpi-subtitle {
+  color: #94a3b8;
+}
+
+.kpi-icon {
+  position: absolute;
+  top: 1rem;
+  right: 1.2rem;
+  font-size: 2.2rem;
+  opacity: 0.12;
+}
+
+/* Badges for Traffic Periods */
+.badge-morning {
+  background-color: rgba(42, 157, 143, 0.15);
+  color: #1e7267;
+  border: 1px solid rgba(42, 157, 143, 0.3);
+  font-weight: 600;
+}
+
+[data-bs-theme="dark"] .badge-morning {
+  background-color: rgba(42, 157, 143, 0.25);
+  color: #48cfbe;
+  border-color: rgba(42, 157, 143, 0.4);
+}
+
+.badge-evening {
+  background-color: rgba(231, 111, 81, 0.15);
+  color: #b84c34;
+  border: 1px solid rgba(231, 111, 81, 0.3);
+  font-weight: 600;
+}
+
+[data-bs-theme="dark"] .badge-evening {
+  background-color: rgba(231, 111, 81, 0.25);
+  color: #ff9178;
+  border-color: rgba(231, 111, 81, 0.4);
+}
+
+.badge-other {
+  background-color: rgba(233, 196, 106, 0.2);
+  color: #9c7816;
+  border: 1px solid rgba(233, 196, 106, 0.4);
+  font-weight: 600;
+}
+
+[data-bs-theme="dark"] .badge-other {
+  background-color: rgba(233, 196, 106, 0.22);
+  color: #f7d58a;
+  border-color: rgba(233, 196, 106, 0.4);
+}
+
+/* Custom Buttons */
+.btn-teal {
+  background-color: var(--pp-teal);
+  border-color: var(--pp-teal);
+  color: #ffffff;
+}
+
+.btn-teal:hover, .btn-teal:focus {
+  background-color: var(--pp-teal-dark);
+  border-color: var(--pp-teal-dark);
+  color: #ffffff;
+}
+
+.btn-coral {
+  background-color: var(--pp-coral);
+  border-color: var(--pp-coral);
+  color: #ffffff;
+}
+
+.btn-coral:hover, .btn-coral:focus {
+  background-color: var(--pp-coral-dark);
+  border-color: var(--pp-coral-dark);
+  color: #ffffff;
+}
+
+.btn-outline-teal {
+  color: var(--pp-teal);
+  border-color: var(--pp-teal);
+}
+
+.btn-outline-teal:hover {
+  background-color: var(--pp-teal);
+  border-color: var(--pp-teal);
+  color: #ffffff;
+}
+
+/* Tables */
+.table-dashboard th {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+  color: #64748b;
+  border-bottom-width: 2px;
+}
+
+[data-bs-theme="dark"] .table-dashboard th {
+  color: #94a3b8;
+}
+
+/* Chart Canvas container */
+.chart-container {
+  position: relative;
+  width: 100%;
+}
+
+/* Ratio pill */
+.ratio-pill {
+  font-weight: 700;
+  font-size: 0.85rem;
+  padding: 0.25rem 0.55rem;
+  border-radius: 6px;
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+[data-bs-theme="dark"] .ratio-pill {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Checkbox card */
+.form-check-card {
+  padding: 1rem 1.25rem;
+  border-radius: 10px;
+  background-color: var(--bs-tertiary-bg);
+  border: 1px solid var(--bs-border-color);
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.form-check-card:hover {
+  border-color: var(--pp-teal);
+}
+
+.form-check-card .form-check-input {
+  float: none !important;
+  margin: 0 !important;
+  cursor: pointer;
+  width: 1.25rem;
+  height: 1.25rem;
+  flex-shrink: 0;
+}
+

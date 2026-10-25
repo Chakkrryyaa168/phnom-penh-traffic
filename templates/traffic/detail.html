@@ -1,0 +1,435 @@
+{% extends "base.html" %}
+
+{% block title %}{{ intersection.name }} | Phnom Penh Traffic Insights{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-3 px-lg-4">
+  <!-- Breadcrumb & Top Bar -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3 gap-2">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-1 small">
+          <li class="breadcrumb-item"><a href="{% url 'traffic:dashboard' %}" class="text-decoration-none text-teal" style="color: var(--pp-teal);">Dashboard</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Intersection Analysis</li>
+        </ol>
+      </nav>
+      <h1 class="h3 fw-bold mb-1 d-flex align-items-center gap-2 flex-wrap">
+        <span>{{ intersection.name }}</span>
+        {% if 'Morning' in summary.period %}
+          <span class="badge badge-morning fs-6">{{ summary.period }}</span>
+        {% elif 'Evening' in summary.period %}
+          <span class="badge badge-evening fs-6">{{ summary.period }}</span>
+        {% else %}
+          <span class="badge badge-other fs-6">{{ summary.period }}</span>
+        {% endif %}
+      </h1>
+      {% if intersection.latitude and intersection.longitude %}
+        <p class="text-secondary small mb-0 font-monospace">
+          <i class="bi bi-geo-alt-fill text-danger me-1"></i>Coordinates: {{ intersection.latitude|floatformat:4 }}&deg;N, {{ intersection.longitude|floatformat:4 }}&deg;E &bull; Phnom Penh
+        </p>
+      {% endif %}
+    </div>
+
+    <!-- Quick Switcher Dropdown & Actions -->
+    <div class="d-flex gap-2 align-items-center">
+      <div class="dropdown">
+        <button class="btn btn-sm btn-outline-secondary dropdown-toggle d-flex align-items-center" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+          <i class="bi bi-compass me-1"></i>Switch Intersection
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end shadow" style="max-height: 320px; overflow-y: auto;">
+          {% for inter in all_intersections %}
+          <li>
+            <a class="dropdown-item small {% if inter.id == intersection.id %}active bg-teal fw-bold{% endif %}" href="{% url 'traffic:detail' inter.id %}">
+              {{ inter.name }}
+            </a>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+      <a href="{% url 'traffic:compare' %}?intersection={{ intersection.id }}" class="btn btn-sm btn-outline-teal" title="Compare this intersection">
+        <i class="bi bi-shuffle me-1"></i>Compare
+      </a>
+      <a href="{% url 'traffic:dashboard' %}" class="btn btn-sm btn-secondary">
+        <i class="bi bi-arrow-left me-1"></i>Back
+      </a>
+    </div>
+  </div>
+
+  <!-- STATS & METRICS TABLE ROW -->
+  <div class="card mb-4">
+    <div class="card-header bg-transparent py-3 border-bottom">
+      <h2 class="h5 fw-bold mb-0">Key Peak Performance Metrics</h2>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-dashboard align-middle mb-0 text-center">
+          <thead class="table-light">
+            <tr>
+              <th>Peak Hour Range</th>
+              <th>Peak Volume</th>
+              <th>Avg Hourly Volume</th>
+              <th>Peak Ratio</th>
+              <th>Rush Period</th>
+              <th>Total Data Points</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <span class="fs-5 fw-bold font-monospace text-teal" style="color: var(--pp-teal);">
+                  {{ summary.peak_hour_range }}
+                </span>
+                <div class="small text-secondary">{{ summary.peak_hour_range_24h|default:"Hour" }}</div>
+              </td>
+              <td>
+                <span class="fs-5 fw-bold" style="color: var(--pp-coral);">
+                  {{ summary.peak_volume|floatformat:1 }}
+                </span>
+                <div class="small text-secondary">vehicles / hour</div>
+              </td>
+              <td>
+                <span class="fs-5 fw-bold text-body">
+                  {{ summary.avg_hourly_volume|floatformat:1 }}
+                </span>
+                <div class="small text-secondary">24-hour mean</div>
+              </td>
+              <td>
+                <span class="ratio-pill fs-6 px-3 py-1 {% if summary.peak_ratio >= 1.8 %}text-danger border border-danger-subtle{% elif summary.peak_ratio >= 1.5 %}text-warning border border-warning-subtle{% else %}text-secondary{% endif %}">
+                  {{ summary.peak_ratio|floatformat:2 }}x
+                </span>
+                <div class="small text-secondary mt-1">peak / average</div>
+              </td>
+              <td>
+                {% if 'Morning' in summary.period %}
+                  <span class="badge badge-morning fs-6 py-2 px-3">{{ summary.period }}</span>
+                {% elif 'Evening' in summary.period %}
+                  <span class="badge badge-evening fs-6 py-2 px-3">{{ summary.period }}</span>
+                {% else %}
+                  <span class="badge badge-other fs-6 py-2 px-3">{{ summary.period }}</span>
+                {% endif %}
+              </td>
+              <td>
+                <span class="fw-semibold text-body">{{ summary.record_count|default:intersection.record_count }}</span>
+                <div class="small text-secondary">hourly observations</div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- LINE CHART OF AVERAGE VOLUME BY HOUR WITH TOGGLE -->
+  <div class="card mb-4">
+    <div class="card-header bg-transparent py-3 border-bottom d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
+      <div>
+        <h2 class="h5 fw-bold mb-0">Hourly Traffic Volume Profile (00:00 - 23:00)</h2>
+        <div class="text-secondary small">Average traffic volume across each hour of the day</div>
+      </div>
+      <!-- Day Type Toggle Controls -->
+      <div class="d-flex align-items-center gap-2">
+        <span class="small text-secondary fw-semibold d-none d-sm-inline">Filter:</span>
+        <div class="btn-group btn-group-sm" role="group" aria-label="Day type filter">
+          <button type="button" class="btn btn-outline-teal active" id="btn-toggle-all" onclick="switchDayType('all')">
+            <i class="bi bi-clock-history me-1"></i>All Days
+          </button>
+          <button type="button" class="btn btn-outline-teal" id="btn-toggle-weekday" onclick="switchDayType('weekday')">
+            <i class="bi bi-briefcase me-1"></i>Weekday
+          </button>
+          <button type="button" class="btn btn-outline-teal" id="btn-toggle-weekend" onclick="switchDayType('weekend')">
+            <i class="bi bi-cup-hot me-1"></i>Weekend
+          </button>
+          <button type="button" class="btn btn-outline-secondary" id="btn-toggle-overlay" onclick="switchDayType('overlay')" title="Overlay all profiles together">
+            <i class="bi bi-layers me-1"></i>Overlay
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="chart-container" style="min-height: 400px;">
+        <canvas id="hourlyProfileChart"></canvas>
+      </div>
+      <div class="text-center mt-3 small text-secondary">
+        <span class="me-3"><i class="bi bi-dot text-teal fs-5" style="color: var(--pp-teal);"></i>Peak hour represents the highest average hourly volume across the selected filter</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 24-HOUR PROFILE DATA TABLE BREAKDOWN -->
+  <div class="card mb-4">
+    <div class="card-header bg-transparent py-3 border-bottom d-flex justify-content-between align-items-center">
+      <h2 class="h6 fw-bold mb-0">24-Hour Profile Breakdown Table</h2>
+      <span class="small text-secondary">Highlighted row indicates overall peak hour</span>
+    </div>
+    <div class="table-responsive" style="max-height: 380px;">
+      <table class="table table-sm table-hover table-dashboard align-middle mb-0 text-center">
+        <thead class="table-light sticky-top">
+          <tr>
+            <th>Hour</th>
+            <th>Hour Interval</th>
+            <th>All Days Avg (veh/h)</th>
+            <th>Weekday Avg (veh/h)</th>
+            <th>Weekend Avg (veh/h)</th>
+            <th>Rush Period Period</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in all_profile.profile %}
+          <tr class="{% if item.hour == summary.peak_hour %}table-warning fw-bold{% endif %}">
+            <td class="font-monospace">{{ item.hour }}:00</td>
+            <td class="font-monospace">{{ item.label }} - {% if item.hour < 23 %}{{ item.hour|add:1|stringformat:"02d" }}:00{% else %}00:00{% endif %}</td>
+            <td class="{% if item.hour == summary.peak_hour %}text-danger fw-bold{% endif %}">
+              {{ item.volume|floatformat:1 }}
+              {% if item.hour == summary.peak_hour %}
+                <span class="badge bg-danger ms-1" style="font-size: 0.65rem;">PEAK</span>
+              {% endif %}
+            </td>
+            <td>
+              {{ weekday_profile.volumes|slice:item.hour|last|default:item.volume|floatformat:1 }}
+            </td>
+            <td>
+              {{ weekend_profile.volumes|slice:item.hour|last|default:item.volume|floatformat:1 }}
+            </td>
+            <td>
+              {% if item.hour >= 6 and item.hour <= 9 %}
+                <span class="badge badge-morning">Morning rush 06-09</span>
+              {% elif item.hour >= 16 and item.hour <= 19 %}
+                <span class="badge badge-evening">Evening rush 16-19</span>
+              {% else %}
+                <span class="badge badge-other text-secondary">Other</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const chartData = {{ chart_data_json|safe }};
+let currentMode = 'all';
+let profileChart = null;
+
+function getThemeColors() {
+  const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+  return {
+    textColor: isDark ? '#94a3b8' : '#475569',
+    gridColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)',
+    tooltipBg: isDark ? '#1e293b' : '#0f172a',
+  };
+}
+
+function buildDatasets(mode) {
+  const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+  
+  if (mode === 'all') {
+    return [{
+      label: 'All Days Average Volume',
+      data: chartData.all,
+      borderColor: '#2a9d8f',
+      backgroundColor: 'rgba(42, 157, 143, 0.12)',
+      fill: true,
+      tension: 0.35,
+      borderWidth: 3,
+      pointRadius: function(ctx) {
+        const val = ctx.raw;
+        const max = Math.max(...chartData.all);
+        return val === max ? 7 : 3.5;
+      },
+      pointBackgroundColor: function(ctx) {
+        const val = ctx.raw;
+        const max = Math.max(...chartData.all);
+        return val === max ? '#e76f51' : '#2a9d8f';
+      },
+      pointHoverRadius: 8,
+    }];
+  } else if (mode === 'weekday') {
+    return [{
+      label: 'Weekday Average Volume',
+      data: chartData.weekday,
+      borderColor: '#e76f51',
+      backgroundColor: 'rgba(231, 111, 81, 0.12)',
+      fill: true,
+      tension: 0.35,
+      borderWidth: 3,
+      pointRadius: 4,
+      pointHoverRadius: 8,
+    }];
+  } else if (mode === 'weekend') {
+    return [{
+      label: 'Weekend Average Volume',
+      data: chartData.weekend,
+      borderColor: '#457b9d',
+      backgroundColor: 'rgba(69, 123, 157, 0.12)',
+      fill: true,
+      tension: 0.35,
+      borderWidth: 3,
+      pointRadius: 4,
+      pointHoverRadius: 8,
+    }];
+  } else if (mode === 'overlay') {
+    return [
+      {
+        label: 'All Days',
+        data: chartData.all,
+        borderColor: '#2a9d8f',
+        backgroundColor: 'transparent',
+        borderWidth: 3,
+        tension: 0.35,
+        pointRadius: 3,
+      },
+      {
+        label: 'Weekdays',
+        data: chartData.weekday,
+        borderColor: '#e76f51',
+        backgroundColor: 'transparent',
+        borderWidth: 2.5,
+        borderDash: [5, 5],
+        tension: 0.35,
+        pointRadius: 3,
+      },
+      {
+        label: 'Weekends',
+        data: chartData.weekend,
+        borderColor: '#457b9d',
+        backgroundColor: 'transparent',
+        borderWidth: 2.5,
+        borderDash: [2, 2],
+        tension: 0.35,
+        pointRadius: 3,
+      }
+    ];
+  }
+}
+
+function initChart() {
+  const ctx = document.getElementById('hourlyProfileChart').getContext('2d');
+  const theme = getThemeColors();
+
+  profileChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: chartData.labels,
+      datasets: buildDatasets(currentMode)
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: {
+        mode: 'index',
+        intersect: false
+      },
+      plugins: {
+        legend: {
+          display: true,
+          position: 'top',
+          labels: {
+            color: theme.textColor,
+            usePointStyle: true,
+            font: { size: 12, weight: '600' }
+          }
+        },
+        tooltip: {
+          backgroundColor: theme.tooltipBg,
+          padding: 12,
+          cornerRadius: 8,
+          titleFont: { size: 13, weight: 'bold' },
+          bodyFont: { size: 12 },
+          callbacks: {
+            label: function(ctx) {
+              return ` ${ctx.dataset.label}: ${Number(ctx.raw).toLocaleString()} veh/h`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: {
+            color: theme.gridColor
+          },
+          ticks: {
+            color: theme.textColor,
+            font: { size: 11 }
+          },
+          title: {
+            display: true,
+            text: 'Hour of Day (00:00 - 23:00)',
+            color: theme.textColor,
+            font: { size: 12, weight: '600' }
+          }
+        },
+        y: {
+          beginAtZero: true,
+          grid: {
+            color: theme.gridColor
+          },
+          ticks: {
+            color: theme.textColor,
+            callback: function(val) {
+              return val.toLocaleString();
+            }
+          },
+          title: {
+            display: true,
+            text: 'Average Vehicles / Hour',
+            color: theme.textColor,
+            font: { size: 12, weight: '600' }
+          }
+        }
+      }
+    }
+  });
+}
+
+function switchDayType(mode) {
+  currentMode = mode;
+  ['all', 'weekday', 'weekend', 'overlay'].forEach(m => {
+    const btn = document.getElementById(`btn-toggle-${m}`);
+    if (btn) {
+      if (m === mode) {
+        btn.classList.add('active');
+        if (m === 'overlay') {
+          btn.classList.remove('btn-outline-secondary');
+          btn.classList.add('btn-secondary');
+        }
+      } else {
+        btn.classList.remove('active');
+        if (m === 'overlay') {
+          btn.classList.remove('btn-secondary');
+          btn.classList.add('btn-outline-secondary');
+        }
+      }
+    }
+  });
+
+  if (profileChart) {
+    profileChart.data.datasets = buildDatasets(mode);
+    profileChart.update();
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  initChart();
+
+  window.addEventListener('themeChanged', function() {
+    const theme = getThemeColors();
+    if (profileChart) {
+      profileChart.options.scales.x.ticks.color = theme.textColor;
+      profileChart.options.scales.x.title.color = theme.textColor;
+      profileChart.options.scales.x.grid.color = theme.gridColor;
+      profileChart.options.scales.y.ticks.color = theme.textColor;
+      profileChart.options.scales.y.title.color = theme.textColor;
+      profileChart.options.scales.y.grid.color = theme.gridColor;
+      profileChart.options.plugins.legend.labels.color = theme.textColor;
+      profileChart.options.plugins.tooltip.backgroundColor = theme.tooltipBg;
+      profileChart.update();
+    }
+  });
+});
+</script>
+{% endblock %}
+
